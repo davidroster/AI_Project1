@@ -20,24 +20,10 @@ print("You can do this :)")
 #3. Writing a Report
 
 
-#Clean the input file
-#need to lowercase,
-#ValueError: I/O operation on closed file. - having issues cause file keeps closing
-
 #pass clean input file
 #split input file into each persons review and save order of reviews in dictionary
 def open_posFile_and_extract_review():
-    with open('test_pos_public.txt', encoding="utf8") as fp: 
-        
-        '''
-        D ={}
-        for num, review in enumerate(fp):
-            #print("review {}: {}".format(num, review))
-            D[num] = review
-            for element in D[num]:
-                element.readline()
-                if element = ','|'.'|'-'|')'|'(':
-        '''
+    with open('test_pos_public.txt', encoding="utf8") as fp:
         reviews = fp.readlines()
         vector_list = []
         for review in reviews:
@@ -57,7 +43,7 @@ def vectorize(individual_Review):
         for char in word:
             if char.isalpha():
                 raw_word += char.lower()
-        print(raw_word)              
+        #print(raw_word)              
                 
         if raw_word in D:
             D[raw_word] += 1
@@ -66,10 +52,24 @@ def vectorize(individual_Review):
 
     return D
 
+#gives us the frequency of the word in each document in the corpus.
+# It is the ratio of number of times the word appears in a document
+# compared to the total number of words in that document. 
+def computeTF(wordDict, bow):
+    #bow = nim of words in each review
+    #worddict is passing vector_list in
+    TFdict = {}
+    bowCount = len(bow)
+    for word, count in wordDict.items():
+        TFdict[word] = count/float(bowCount)
+    return TFdict
+
+
 def main():
+    #returns vector list 
     Reviews = open_posFile_and_extract_review()
     
-    #for Reviews[1] in Reviews[0]:
+    
 
         
 
