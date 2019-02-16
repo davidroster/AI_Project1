@@ -4,6 +4,8 @@
 import sys  
 import os
 import string
+import math
+#import numpy
 
 print("You can do this :)")
 
@@ -65,57 +67,74 @@ def vectorize(individual_Review):
 #gives us the frequency of the word in each document in the corpus.
 # It is the ratio of number of times the word appears in a document
 # compared to the total number of words in that document. 
-def computeTF(wordDict, bow):
-    #bow = num of words in each review
-    #worddict is passing vector_list in
+def computeTF(total_reviews, count_word):
+    #count_word = num of words in each review
+    #total_reviews is passing vector_list in
     '''TF = frequency of word in doc/ total num of terms in doc '''
-    print('\n')
-    print('\n')
-    print("Enter ComputerTF Function\n")
-    print("WordDict type is ..." + str(wordDict))
-    print("bow type is ..." + str(bow))
-            #for word_incrementor in indiviudal_dictionary:
-        #TypeError: 'NoneType' object is not iterable
-        #trying to use count var instead
     
     TFVector = []
-    count = 0
-    '''
-    #Iterate through vector_list that we passed in
-    for total_count in wordDict:
-        #pops the first dictionary
-        indiviudal_dictionary = wordDict.remove(total_count)
-        for word_incrementor in indiviudal_dictionary:
-            individual_TFdict = {}
-            word_frequency = indiviudal_dictionary[word_incrementor]
-            print("word frequency is ... " + word_frequency)
-            individual_TFdict[word_incrementor] = word_frequency/float(bow[total_count])
-            print("individual_TFdict is ... " + individual_TFdict)
-        TFVector.append(individual_TFdict)
+    incr_dict = {}
+    count = 1
+
+    #cycles through each dictionary in list
+    for i in total_reviews:
+        #cycles through each word in dictionary
+        for word in i:
+            indiv_dict_sum = count_word[count]
+            word_count = i[word]
+            TF = word_count / float(indiv_dict_sum)
+            incr_dict[word] = TF
+        #print(incr_dict)
+        TFVector.append(incr_dict)
         count = count + 1
 
-    
-#        individual_TFdict = {}
-#        #bowCount = len(bow)
-#        for word in wordDict:
-#            individual_TFdict[word] = word/float(bow[word])
-#            print(individual_TFdict[word])
-#        return individual_TFdict
-    '''
     return TFVector
+
+def computeIDF(total_reviews, count_word):
+    '''IDF = ln(total number of reviews / number of reviews with term in it)'''
+
+    number_of_reviews = len(count_word)
+    IDF_dict = {}
+
+    for inc in total_reviews:
+        for word in inc:
+            if word in IDF_dict:
+                IDF_dict[word] += 1
+            else:
+                IDF_dict[word] = 1
+    
+    for i in IDF_dict:
+        IDF_dict[i] = math.log(number_of_reviews/float(IDF_dict[i]))
+
+    return IDF_dict
+
+def computeTF_IDF (TF, IDF):
+    TF_IDF = []
+    little_TFIDF = {}
+
+    for i in TF:
+        for word in i:
+            little_TFIDF[word] = i[word] * IDF[word]
+        TF_IDF.append(little_TFIDF)
+        #print(little_TFIDF)
+
+    return TF_IDF 
 
 def main():
     #returns vector list -> Reviews
     #returns dictionary -> count_word
     Reviews, count_word = open_posFile_and_extract_review()
-    print(Reviews)
-    print(count_word)
+    #print(Reviews)
+    #print(count_word)
 
-    print('\n')
-    print('\n')
-
+    #print('\n')
+    #print('\n')
     TF = computeTF(Reviews, count_word)
-    print(TF)
+    IDF = computeIDF(Reviews, count_word)
+
+    TF_IDF = computeTF_IDF(TF, IDF)
+
+    #print(len(TF_IDF))
 
 if __name__ == '__main__':
     main()
