@@ -27,37 +27,40 @@ print("You can do this :)")
 def open_File_train_and_extract_review(filename):
     #with open('test_pos_public.txt', encoding="utf8") as fp:
     with open(filename, encoding="utf8") as fp:
-        temp = ""
-        for line in fp:
-            temp = temp + line
-        reviews = temp.split("<br /><br />")
-        vector_list = []
+        # temp = ""
+        # for line in fp:
+        temp = fp.read()
+    reviews = temp.split("<br /><br />")
+    vector_list = []
 
-        review_sum = {}
-        count_sum = 1
-        temp = 0
+    review_sum = {}
+    count_sum = 1
+    temp = 0
 
-        for review in reviews:
-            #Pushes in a list of strings
-            D, individual_review_sum,sum_of_keys  = vectorize(review)
-            temp = temp + sum_of_keys
-            vector_list.append(D)
-            review_sum[count_sum] = individual_review_sum
-            count_sum = count_sum + 1
+    for review in reviews:
+        #Pushes in a list of strings
+        D, individual_review_sum,sum_of_keys  = vectorize(review)
+        temp = temp + sum_of_keys
+        vector_list.append(D)
+        review_sum[count_sum] = individual_review_sum
+        count_sum = count_sum + 1
 
     #Returns complete vector to main function
     return  vector_list, review_sum,temp
 
 def vectorize(individual_Review):
     #Takes in a list of strings
-    #word_list = individual_Review.split("<br /><br") #'<br ><br >'
     word_list = individual_Review.strip().split(" ")
-    #print(word_list)
     D = {}
+    Stop_Word_D = {"a", "about", "above","after","again","against","all","a","man","and", "any", "area", "sat","be","because",
+                    "been","before","being","below","between","both","but","by","could","did","do","does","doing","down","during",
+                    "each","few","for","from","further","had","has","have","having","he","hed","hes","her","here","heres","self","him",
+                    "himself","his","how","hows","sit","sits","more","most","my","myself","no","other","ought","our","oursourselves",
+                    "out","over","own","same","such","than","that","theirs","themthemselves","then","there","theres","these","they",
+                    "theyd","theyll","theyre","theyve","this","what","whats","when","where","wheres","which","while","who","why"}
     word_count = 0
     for word in word_list:
         word.lower()
-        #print(word)
         #String processing bullshit
         raw_word = ""
         for letter in word:
@@ -68,37 +71,23 @@ def vectorize(individual_Review):
             letter == 'y' or letter == 'z'):
 
                 raw_word = raw_word + letter
-            
-#         '''
-#         for word in word_list:
-#             if word.isalpha():
-#                 raw_word += word.lower()
-#         #print(raw_word)             
-        #if set(raw_word):      
-        if raw_word in D:
-            D[raw_word] += 1
-        else:
-            D[raw_word] = 1
-        word_count = word_count + 1
-# '''
+        
+        if(raw_word):
+            if(raw_word not in Stop_Word_D):     
+                if raw_word in D:
+                    D[raw_word] += 1
+                else:
+                    D[raw_word] = 1
+                    word_count = word_count + 1
             
     individual_Review_sum = sum(D.values())
-    #sum_of_keys = sum(D.keys())
-    #print("individual review sum ..." + str(individual_Review_sum))
-    #print(D)
     return D, individual_Review_sum, word_count
 
 
 def Total_Reviews__word_Sum(total_reviews):
     #Iterate through all reviews one review at a time
     #Iterate through each word in review and add key values
-    '''
-    reviews_sum = 0
-    for review in total_reviews:
-        for word in review:
-           reviews_sum = review[word] + reviews_sum
-    return reviews_sum
-    '''
+
     Reviews_list = []
     Reviews_dict = {}
 
@@ -184,7 +173,6 @@ def get_num_of_word(Reviews):
     return num_of_word
 
 
-
 #def Gaussian_BOW(Pos_Reviews, Neg_Reviews, Pos_count, Neg_count):
 def Gaussian_BOW(word_sum, total_keys, word, classification_keys):
     '''
@@ -200,78 +188,38 @@ def Gaussian_BOW(word_sum, total_keys, word, classification_keys):
     denominator = (classification_keys + (alpha * (total_keys)))
     word_prob = math.log((numerator / denominator))           
 
-
-    #trying something
-    '''
-    #setting alpha value equal to 1
-    alpha = 1
-    BOW_dict_pos = {}
-    BOW_dict_neg = {}
-    #neg_sum = sum(Neg_count)
-    #pos_sum = sum(Pos_count)
-    neg_sum = Neg_count #neg count is training number of neg keys
-    pos_sum = Pos_count #pos count is training number of pos keys
-
-    #do pos prob first
-    for Review in Pos_Reviews:
-        for word in Review:
-            if(word not in BOW_dict_pos):
-                desired_pos_word = pos_word_sum[word]
-                pos_numerator = desired_pos_word + alpha
-                pos_denominator = (pos_sum + (alpha * (neg_sum + pos_sum)))
-                pos_word_prob = math.log((pos_numerator / pos_denominator))           
-                BOW_dict_pos[word] = pos_word_prob
-                #print(pos_word_prob)
-    
-    #do neg prob now
-    for Review in Neg_Reviews:
-        for word in Review:
-            if(word not in BOW_dict_neg):
-                desired_neg_word = neg_word_sum[word]
-                neg_numerator = desired_neg_word + alpha
-                neg_denominator = (neg_sum + (alpha * (neg_sum + pos_sum)))
-                neg_word_prob = math.log((neg_numerator / neg_denominator))              
-                BOW_dict_neg[word] = neg_word_prob
-                #print(neg_word_prob)
-
-    return BOW_dict_pos, BOW_dict_neg
-    '''
-    word_prob = 1
     return word_prob
 
 def compare_public_vs_training(Pos_Reviews, Neg_Reviews, Pos_count, Neg_count, train_pos_number_keys, train_neg_number_keys):
     public_pos, pos_count, sum_of_public_pos_keys = open_File_train_and_extract_review('test_pos_public.txt')
     public_neg, neg_count, sum_of_public_neg_keys = open_File_train_and_extract_review('test_neg_public.txt')
 
-    #Pos_Train_BOW_Prob, Neg_Train_BOW_Prob = Gaussian_BOW(Pos_Reviews, Neg_Reviews, Pos_count, Neg_count)
-    '''Pos_Train_BOW_Prob, Neg_Train_BOW_Prob = Gaussian_BOW(Pos_Reviews, Neg_Reviews, train_pos_number_keys, train_neg_number_keys)'''
-
-    Public_POS_Classification_P = 0
-    Public_NOS_Classification_N = 0
     posPublic_pos_count = 0
     posPublic_neg_count = 0
     negPublic_neg_count = 0
     negPublic_pos_count = 0
 
+    number_of_class_keys_pos = len(Pos_count)
+    number_of_class_keys_neg = len(Neg_count)
+
     total_keys = train_neg_number_keys + train_pos_number_keys
     pos_word_count = get_num_of_word(Pos_Reviews)
     neg_word_count = get_num_of_word(Neg_Reviews)
-    temp_pos = train_pos_number_keys
-    temp_neg = train_neg_number_keys
+
 
     for Review in public_pos:
         Public_POS_Classification_N = 0
         Public_POS_Classification_P = 0  
         for word in Review:
             try:
-                Pos_Train_BOW_Prob = Gaussian_BOW(pos_word_count, total_keys, word, train_pos_number_keys)
+                Pos_Train_BOW_Prob = Gaussian_BOW(pos_word_count, total_keys, word, number_of_class_keys_pos)
                 Public_POS_Classification_P = Pos_Train_BOW_Prob + Public_POS_Classification_P
 
             except KeyError:
                 Public_POS_Classification_P = Public_POS_Classification_P + 0
             
             try:
-                Neg_Train_BOW_Prob = Gaussian_BOW(neg_word_count, total_keys, word, train_neg_number_keys)
+                Neg_Train_BOW_Prob = Gaussian_BOW(neg_word_count, total_keys, word, number_of_class_keys_neg)
                 Public_POS_Classification_N = Neg_Train_BOW_Prob + Public_POS_Classification_N
                 
             except KeyError:
@@ -279,53 +227,49 @@ def compare_public_vs_training(Pos_Reviews, Neg_Reviews, Pos_count, Neg_count, t
                 
         if(Public_POS_Classification_P > Public_POS_Classification_N):
             posPublic_pos_count = posPublic_pos_count + 1
-            print("pos count is ..." + str(posPublic_pos_count))
         else:
-        #if(Public_NOS_Classification_N > Public_POS_Classification_P):
             posPublic_neg_count = posPublic_neg_count + 1
-            #print("neg count is ..." + str(posPublic_neg_count))
 
     Pos_Public_Pos_Accuracy = ((posPublic_pos_count) / (posPublic_pos_count + posPublic_neg_count)) * 100
     Pos_Public_Neg_Accuracy = ((posPublic_neg_count) / (posPublic_pos_count + posPublic_neg_count)) * 100
     print("Positive class -> POS Accuracy is ... " + str(Pos_Public_Pos_Accuracy))
     print("Positive class -> NEG Accuracy is ..." + str(Pos_Public_Neg_Accuracy))
 
+
     for Review in public_neg:
         Public_NEG_Classification_N = 0
         Public_NEG_Classification_P = 0  
         for word in Review:
             try:
-                Pos_Train_BOW_Prob = Gaussian_BOW(pos_word_count, total_keys, word, train_pos_number_keys)
+                Pos_Train_BOW_Prob = Gaussian_BOW(pos_word_count, total_keys, word, number_of_class_keys_pos)
                 Public_NEG_Classification_P = Pos_Train_BOW_Prob + Public_NEG_Classification_P
 
             except KeyError:
                 Public_NEG_Classification_P = Public_NEG_Classification_P + 0
             
             try:
-                Neg_Train_BOW_Prob = Gaussian_BOW(neg_word_count, total_keys, word, train_neg_number_keys)
+                Neg_Train_BOW_Prob = Gaussian_BOW(neg_word_count, total_keys, word, number_of_class_keys_neg)
                 Public_NEG_Classification_N = Neg_Train_BOW_Prob + Public_NEG_Classification_N
                 
             except KeyError:
                 Public_NEG_Classification_N = Public_NEG_Classification_N + 0
                 
-        if(Public_POS_Classification_P > Public_POS_Classification_N):
+        if(Public_NEG_Classification_P > Public_NEG_Classification_N):
             negPublic_pos_count = negPublic_pos_count + 1
-            #print("pos count is ..." + str(negPublic_pos_count))
         else:
-        #if(Public_NOS_Classification_N > Public_POS_Classification_P):
             negPublic_neg_count = negPublic_neg_count + 1
-            #print("neg count is ..." + str(negPublic_neg_count))
 
     Neg_Public_Pos_Accuracy = ((negPublic_pos_count) / (negPublic_pos_count + negPublic_neg_count)) * 100
     Neg_Public_Neg_Accuracy = ((negPublic_neg_count) / (negPublic_pos_count + negPublic_neg_count)) * 100
-    print("NEG PUBLIC -> POS Accuracy is ... " + str(Neg_Public_Pos_Accuracy))
-    print("NEG PUBLIC -> NEG Accuracy is ..." + str(Neg_Public_Neg_Accuracy))
+    print("Negative class -> POS Accuracy is ... " + str(Neg_Public_Pos_Accuracy))
+    print("Negative class -> NEG Accuracy is ..." + str(Neg_Public_Neg_Accuracy))
+
 
 def main():
     #returns vector list -> Reviews
     #returns dictionary -> count_word
-    Positive_Reviews, Positive_count_word, pos_key_count = open_File_train_and_extract_review('test_pos_public.txt')
-    Negative_Reviews, Negative_count_word, neg_key_count = open_File_train_and_extract_review('test_neg_public.txt')
+    Positive_Reviews, Positive_count_word, pos_key_count = open_File_train_and_extract_review('training_pos.txt')
+    Negative_Reviews, Negative_count_word, neg_key_count = open_File_train_and_extract_review('training_neg.txt')
 
     compare_public_vs_training(Positive_Reviews, Negative_Reviews, Positive_count_word, Negative_count_word, pos_key_count, neg_key_count)
 
