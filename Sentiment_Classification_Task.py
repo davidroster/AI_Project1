@@ -5,7 +5,8 @@ import sys
 import os
 import string
 import math
-#import numpy
+import statistics
+#import numpy as np
 
 print("You can do this :)")
 
@@ -83,26 +84,6 @@ def vectorize(individual_Review):
     individual_Review_sum = sum(D.values())
     return D, individual_Review_sum, word_count
 
-
-def Total_Reviews__word_Sum(total_reviews):
-    #Iterate through all reviews one review at a time
-    #Iterate through each word in review and add key values
-
-    Reviews_list = []
-    Reviews_dict = {}
-
-    word_sum = 0
-    for review in total_reviews:
-        for word in review:
-            if (word in Reviews_dict):
-                Reviews_dict[word] = Reviews_dict[word] + 1
-            else:
-                Reviews_dict[word] = 1
-        Reviews_list.append(Reviews_dict)
-        word_sum = sum(Reviews_dict.values()) + word_sum
-    return word_sum
-
-
 #gives us the frequency of the word in each document in the corpus.
 # It is the ratio of number of times the word appears in a document
 # compared to the total number of words in that document. 
@@ -173,8 +154,8 @@ def get_num_of_word(Reviews):
     return num_of_word
 
 
-#def Gaussian_BOW(Pos_Reviews, Neg_Reviews, Pos_count, Neg_count):
-def Gaussian_BOW(word_sum, total_keys, word, classification_keys):
+#def Multivariative_BOW(Pos_Reviews, Neg_Reviews, Pos_count, Neg_count):
+def Multivariative_BOW(word_sum, total_keys, word, classification_keys):
     '''
     number of times that word appears in a negative + some alpha value
     _________________________________________________________________
@@ -184,15 +165,14 @@ def Gaussian_BOW(word_sum, total_keys, word, classification_keys):
     alpha = 1
     desired_word = word_sum[word]
     numerator = desired_word + alpha
-    #denominator = (classification_keys + (alpha * (neg_number_of_keys + pos_number_of_keys)))
     denominator = (classification_keys + (alpha * (total_keys)))
     word_prob = math.log((numerator / denominator))           
 
     return word_prob
 
 def compare_public_vs_training(Pos_Reviews, Neg_Reviews, Pos_count, Neg_count, train_pos_number_keys, train_neg_number_keys):
-    public_pos, pos_count, sum_of_public_pos_keys = open_File_train_and_extract_review('test_pos_public.txt')
-    public_neg, neg_count, sum_of_public_neg_keys = open_File_train_and_extract_review('test_neg_public.txt')
+    public_pos, pos_count, sum_of_public_pos_keys = open_File_train_and_extract_review(sys.argv[3])
+    public_neg, neg_count, sum_of_public_neg_keys = open_File_train_and_extract_review(sys.argv[4])
 
     posPublic_pos_count = 0
     posPublic_neg_count = 0
@@ -206,20 +186,19 @@ def compare_public_vs_training(Pos_Reviews, Neg_Reviews, Pos_count, Neg_count, t
     pos_word_count = get_num_of_word(Pos_Reviews)
     neg_word_count = get_num_of_word(Neg_Reviews)
 
-
     for Review in public_pos:
         Public_POS_Classification_N = 0
         Public_POS_Classification_P = 0  
         for word in Review:
             try:
-                Pos_Train_BOW_Prob = Gaussian_BOW(pos_word_count, total_keys, word, number_of_class_keys_pos)
+                Pos_Train_BOW_Prob = Multivariative_BOW(pos_word_count, total_keys, word, number_of_class_keys_pos)
                 Public_POS_Classification_P = Pos_Train_BOW_Prob + Public_POS_Classification_P
 
             except KeyError:
                 Public_POS_Classification_P = Public_POS_Classification_P + 0
             
             try:
-                Neg_Train_BOW_Prob = Gaussian_BOW(neg_word_count, total_keys, word, number_of_class_keys_neg)
+                Neg_Train_BOW_Prob = Multivariative_BOW(neg_word_count, total_keys, word, number_of_class_keys_neg)
                 Public_POS_Classification_N = Neg_Train_BOW_Prob + Public_POS_Classification_N
                 
             except KeyError:
@@ -241,14 +220,14 @@ def compare_public_vs_training(Pos_Reviews, Neg_Reviews, Pos_count, Neg_count, t
         Public_NEG_Classification_P = 0  
         for word in Review:
             try:
-                Pos_Train_BOW_Prob = Gaussian_BOW(pos_word_count, total_keys, word, number_of_class_keys_pos)
+                Pos_Train_BOW_Prob = Multivariative_BOW(pos_word_count, total_keys, word, number_of_class_keys_pos)
                 Public_NEG_Classification_P = Pos_Train_BOW_Prob + Public_NEG_Classification_P
 
             except KeyError:
                 Public_NEG_Classification_P = Public_NEG_Classification_P + 0
             
             try:
-                Neg_Train_BOW_Prob = Gaussian_BOW(neg_word_count, total_keys, word, number_of_class_keys_neg)
+                Neg_Train_BOW_Prob = Multivariative_BOW(neg_word_count, total_keys, word, number_of_class_keys_neg)
                 Public_NEG_Classification_N = Neg_Train_BOW_Prob + Public_NEG_Classification_N
                 
             except KeyError:
@@ -265,13 +244,90 @@ def compare_public_vs_training(Pos_Reviews, Neg_Reviews, Pos_count, Neg_count, t
     print("Negative class -> NEG Accuracy is ..." + str(Neg_Public_Neg_Accuracy))
 
 
+def Format_Gaussian_BOW(Reviews):
+    print("Entering Format_Gaussian_BOW Function")
+    print("Lets get it")
+
+    Gaussian_BOW_List = []
+
+    for review in Reviews:
+        index=0
+        Word_with_index_value_Dict = {}
+        for word in review:
+            if(word in Word_with_index_value_Dict):
+                Word_with_index_value_Dict[word] = Word_with_index_value_Dict[word] + 1
+            else:
+                Word_with_index_value_Dict[word] = 1
+
+        Gaussian_BOW_List.append(Word_with_index_value_Dict)
+
+    print("Exiting Format_Gaussian_BOW Function")
+    return Gaussian_BOW_List
+
+def get_all_unique_words(Reviews):
+    print("Entering get_all_unique_words Function")
+    unique_words = []
+
+    for review in Reviews:
+        for word in review:
+            if (word not in unique_words):
+                unique_words.append(word)
+        
+    #print(unique_words)
+    print("Exiting get_all_unique_words Function")
+    return unique_words
+
+def Gaussian_BOW(Pos_Train_Review, Neg_Train_Review):
+    Pos_Public_Review, pos_count, sum_of_public_pos_keys = open_File_train_and_extract_review(sys.argv[3])
+    Neg_Public_Review, neg_count, sum_of_public_neg_keys = open_File_train_and_extract_review(sys.argv[4])
+    
+    Format_Gaussian_Pos_Train_Review = Format_Gaussian_BOW(Pos_Train_Review)
+    Format_Gaussian_Neg_Train_Review = Format_Gaussian_BOW(Neg_Train_Review)
+
+    All_unique_Pos_Words = get_all_unique_words(Pos_Train_Review)
+    All_unique_Neg_Words = get_all_unique_words(Neg_Train_Review)
+
+    mean_dict = {}
+    stdev_dict = {}
+
+    print("Entering main For Loop in Gaussian BOW")
+    for iterate_words in All_unique_Pos_Words:
+        temp_List = []
+        for review in Format_Gaussian_Pos_Train_Review:
+            print("Entering Format_Gaussian_Pos_Train_Review For Loop in Gaussian BOW")
+            try:
+                if(review[iterate_words]):
+                    temp = review[iterate_words]
+                    temp_List.append(temp)
+            except KeyError:
+                temp_List.append(0)
+
+        mean = statistics.mean(temp_List)
+        stdev = statistics.stdev(temp_List)
+        mean_dict[iterate_words] = mean
+        stdev_dict[iterate_words] = stdev
+    
+    print(mean_dict)
+    print(stdev_dict)
+
+
+
+
+
+
+
+
 def main():
-    #returns vector list -> Reviews
-    #returns dictionary -> count_word
-    Positive_Reviews, Positive_count_word, pos_key_count = open_File_train_and_extract_review('training_pos.txt')
-    Negative_Reviews, Negative_count_word, neg_key_count = open_File_train_and_extract_review('training_neg.txt')
+
+    if len(sys.argv) == 5:
+        #returns vector list -> Reviews
+        #returns dictionary -> count_word
+        Positive_Reviews, Positive_count_word, pos_key_count = open_File_train_and_extract_review(sys.argv[1])
+        Negative_Reviews, Negative_count_word, neg_key_count = open_File_train_and_extract_review(sys.argv[2])
 
     compare_public_vs_training(Positive_Reviews, Negative_Reviews, Positive_count_word, Negative_count_word, pos_key_count, neg_key_count)
+
+    Gaussian_BOW(Positive_Reviews, Negative_Reviews)
 
     #TF = computeTF(Reviews, count_word)
     #IDF = computeIDF(Reviews, count_word)
