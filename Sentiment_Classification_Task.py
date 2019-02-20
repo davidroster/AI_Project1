@@ -244,76 +244,204 @@ def compare_public_vs_training(Pos_Reviews, Neg_Reviews, Pos_count, Neg_count, t
     print("Negative class -> NEG Accuracy is ..." + str(Neg_Public_Neg_Accuracy))
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 def Format_Gaussian_BOW(Reviews):
     print("Entering Format_Gaussian_BOW Function")
     print("Lets get it")
 
-    Gaussian_BOW_List = []
+    #Stores index values of words in a List of Dictionaries
+    Gaussian_BOW_Unique_WordList = []
+    #Stores total amount of each word in the .txt file in a Dictionary
+    Gaussian_BOW_TotalWords_Dict = {}
 
-    for review in Reviews:
-        index=0
+    Gaussian_BOW_WordCount_INReviews_WordList =[]
+    Gaussian_BOW_WordCount_IN_Individual_Review_Dict = {}
+
+    Gaussian_NumberofReviews_a_WordIsIN_Dict = {}
+
+    words_in_each_review_dict = {}
+    count = 0
+
+    for review_placeholder, review in enumerate(Reviews):
         Word_with_index_value_Dict = {}
+        index = 0
         for word in review:
-            if(word in Word_with_index_value_Dict):
-                Word_with_index_value_Dict[word] = Word_with_index_value_Dict[word] + 1
+            count = count + 1
+
+            #displays 
+            if(word in Gaussian_BOW_WordCount_IN_Individual_Review_Dict):
+                Gaussian_BOW_WordCount_IN_Individual_Review_Dict[word] = Gaussian_BOW_WordCount_IN_Individual_Review_Dict[word] + 1
             else:
-                Word_with_index_value_Dict[word] = 1
+                Gaussian_BOW_WordCount_IN_Individual_Review_Dict[word] = 1
 
-        Gaussian_BOW_List.append(Word_with_index_value_Dict)
+            if(word in Gaussian_BOW_TotalWords_Dict):
+                Gaussian_BOW_TotalWords_Dict[word] = Gaussian_BOW_TotalWords_Dict[word] + 1
+            else:
+                Gaussian_BOW_TotalWords_Dict[word] = 1
 
-    print("Exiting Format_Gaussian_BOW Function")
-    return Gaussian_BOW_List
+            if(word not in Word_with_index_value_Dict):
+                Word_with_index_value_Dict[word] = index
+                index = index + 1
 
-def get_all_unique_words(Reviews):
-    print("Entering get_all_unique_words Function")
-    unique_words = []
+        words_in_each_review_dict[review_placeholder] = count
+            
+            
+        #print("Word_with_index_value_Dict", Word_with_index_value_Dict)
+        Gaussian_BOW_Unique_WordList.append(Word_with_index_value_Dict)
+        Gaussian_BOW_WordCount_INReviews_WordList.append(Gaussian_BOW_WordCount_IN_Individual_Review_Dict)
+    #print("Gaussian_BOW_TotalWords_Dict", Gaussian_BOW_TotalWords_Dict)
+    return Gaussian_BOW_Unique_WordList, Gaussian_BOW_WordCount_INReviews_WordList, Gaussian_BOW_TotalWords_Dict, words_in_each_review_dict
 
-    for review in Reviews:
-        for word in review:
-            if (word not in unique_words):
-                unique_words.append(word)
-        
-    #print(unique_words)
-    print("Exiting get_all_unique_words Function")
-    return unique_words
 
 def Gaussian_BOW(Pos_Train_Review, Neg_Train_Review):
-    Pos_Public_Review, pos_count, sum_of_public_pos_keys = open_File_train_and_extract_review(sys.argv[3])
-    Neg_Public_Review, neg_count, sum_of_public_neg_keys = open_File_train_and_extract_review(sys.argv[4])
+    #Pos_Public_Review, pos_count, sum_of_public_pos_keys = open_File_train_and_extract_review(sys.argv[3])
+    #Neg_Public_Review, neg_count, sum_of_public_neg_keys = open_File_train_and_extract_review(sys.argv[4])
     
-    Format_Gaussian_Pos_Train_Review = Format_Gaussian_BOW(Pos_Train_Review)
-    Format_Gaussian_Neg_Train_Review = Format_Gaussian_BOW(Neg_Train_Review)
+    #return order for Format_Gaussian_BOW
+        #Gaussian_BOW_Unique_WordList -> #Stores index values of words in a List of Dictionaries
+        #Gaussian_BOW_WordCount_INReviews_WordList -> number of times each word appears in a review
+        #Gaussian_BOW_TotalWords_Dict ->   #Stores total amount of each word in the .txt file in a Dictionary
 
-    All_unique_Pos_Words = get_all_unique_words(Pos_Train_Review)
-    All_unique_Neg_Words = get_all_unique_words(Neg_Train_Review)
+    Format_Gaussian_Pos_Train_Review, Pos_WordCount_INReviews_WordList, Pos_TotalWords_Dict, pos_words_in_each_review_dict = Format_Gaussian_BOW(Pos_Train_Review)
+    Format_Gaussian_Neg_Train_Review, Neg_WordCount_INReviews_WordList, Neg_TotalWords_Dict, neg_words_in_each_review_dict = Format_Gaussian_BOW(Neg_Train_Review)
 
-    mean_dict = {}
-    stdev_dict = {}
+    Pos_mean_dict = {}
+    Pos_stdev_dict = {}
+    Neg_mean_dict = {}
+    Neg_stdev_dict = {}
+    
+    review_count = 0
+    index_counter =0
 
+    print(len(Pos_Train_Review))
+    print(len(Format_Gaussian_Pos_Train_Review))
+
+    #matrix = [len(Pos_Train_Review) - 1][len(Format_Gaussian_Pos_Train_Review) - 1]
+    matrix = [[0 for i in range(len(Pos_Train_Review))] for j in range(len(Format_Gaussian_Pos_Train_Review))]
+    #if i can get numpy do this bright below and comment out matrix
+    #matrix = numpy.zeros(len(Pos_Train_Review), len(Format_Gaussian_Pos_Train_Review))
+
+    for index,review in enumerate(Pos_Train_Review):
+        indexDict = {}
+        for word in review:
+            if(word not in indexDict):
+                indexDict[word] = index_counter
+                index_counter = index_counter + 1
+                word_value = Pos_WordCount_INReviews_WordList[index][word]
+                matrix[review_count][indexDict[word]] = word_value
+        review_count = review_count + 1
+
+    print(matrix)
+
+    
+
+    '''
     print("Entering main For Loop in Gaussian BOW")
-    for iterate_words in All_unique_Pos_Words:
+    for review in Format_Gaussian_Pos_Train_Review:
         temp_List = []
-        for review in Format_Gaussian_Pos_Train_Review:
-            print("Entering Format_Gaussian_Pos_Train_Review For Loop in Gaussian BOW")
+        print("Entering Format_Gaussian_Pos_Train_Review For Loop in Gaussian BOW")
+        for word in review:
             try:
-                if(review[iterate_words]):
-                    temp = review[iterate_words]
+                if(review[word]):
+                    temp = review[word]
                     temp_List.append(temp)
             except KeyError:
                 temp_List.append(0)
 
+
         mean = statistics.mean(temp_List)
         stdev = statistics.stdev(temp_List)
-        mean_dict[iterate_words] = mean
-        stdev_dict[iterate_words] = stdev
+        print("The current word is ...", word)
+        print("mean of this word is ... ", mean)
+        print("Stdev of this word is ...",stdev)
+        mean_dict[word] = mean
+        stdev_dict[word] = stdev
     
     print(mean_dict)
     print(stdev_dict)
+    '''
+    return Pos_mean_dict, Pos_stdev_dict, Neg_mean_dict, Neg_stdev_dict, pos_words_in_each_review_dict, neg_words_in_each_review_dict
 
 
 
+def GNB(word, word_value, mean_dict, stdev_dict):
+    #x = number of times you saw word in review / total words in that review 
+
+    mean = mean_dict[word]
+    stdev = stdev_dict[word]
+    x = word_value
+
+    if (stdev != 0):
+        Gaussian_Naive_Bayes = math.log(1.0/float(math.sqrt(2*3.1415926*(stdev**2))) - (float((x - mean)**2)/float(2*stdev)))
+    else:
+        Gaussian_Naive_Bayes = 0
+
+    return Gaussian_Naive_Bayes
 
 
+
+def Gaussian_Formula_Classification(Pos_Train_Reviews, Neg_Train_Reviews, Pos_Count_Word, Neg_Count_Word):
+    public_pos, pos_count, sum_of_public_pos_keys = open_File_train_and_extract_review(sys.argv[3])
+    public_neg, neg_count, sum_of_public_neg_keys = open_File_train_and_extract_review(sys.argv[4])
+
+    Pos_Mean_dict, Pos_stdev_dict, Neg_Mean_dict, Neg_stdev_dict, Pos_WordCount_INReviews_dict, Neg_WordCount_INReviews_dict = Gaussian_BOW(Pos_Train_Reviews, Neg_Train_Reviews)
+
+    review_number_inc = 1
+    total_Gaussian_Probability = 0
+
+    for review in public_pos:
+        for word in review:
+            try:
+                review_value = Pos_Count_Word[review_number_inc]
+                number_of_words_in_currentreview = Pos_WordCount_INReviews_dict[review_number_inc]
+                word_value = review_value / number_of_words_in_currentreview
+                Gaussian_Prob = GNB(word, word_value, Pos_Mean_dict, Pos_stdev_dict)
+            except KeyError:
+                Gaussian_Prob = Gaussian_Prob + 0
+
+        review_number_inc = review_number_inc + 1
+
+    # for Review in public_pos:
+    #     Public_POS_Classification_N = 0
+    #     Public_POS_Classification_P = 0  
+    #     for word in Review:
+    #         try:
+    #             Pos_Train_BOW_Prob = Gaussian_BOW(Pos_Train_Reviews, Neg_Train_Reviews)
+    #             Public_POS_Classification_P = Pos_Train_BOW_Prob + Public_POS_Classification_P
+
+    #         except KeyError:
+    #             Public_POS_Classification_P = Public_POS_Classification_P + 0
+            
+    #         try:
+    #             Neg_Train_BOW_Prob = Gaussian_BOW(neg_word_count, total_keys, word, number_of_class_keys_neg)
+    #             Public_POS_Classification_N = Neg_Train_BOW_Prob + Public_POS_Classification_N
+                
+    #         except KeyError:
+    #             Public_POS_Classification_N = Public_POS_Classification_N + 0
+                
+    #     if(Public_POS_Classification_P > Public_POS_Classification_N):
+    #         posPublic_pos_count = posPublic_pos_count + 1
+    #     else:
+    #         posPublic_neg_count = posPublic_neg_count + 1
+
+    # Pos_Public_Pos_Accuracy = ((posPublic_pos_count) / (posPublic_pos_count + posPublic_neg_count)) * 100
+    # Pos_Public_Neg_Accuracy = ((posPublic_neg_count) / (posPublic_pos_count + posPublic_neg_count)) * 100
+    # print("Positive class -> POS Accuracy is ... " + str(Pos_Public_Pos_Accuracy))
+    # print("Positive class -> NEG Accuracy is ..." + str(Pos_Public_Neg_Accuracy))
 
 
 
@@ -325,9 +453,11 @@ def main():
         Positive_Reviews, Positive_count_word, pos_key_count = open_File_train_and_extract_review(sys.argv[1])
         Negative_Reviews, Negative_count_word, neg_key_count = open_File_train_and_extract_review(sys.argv[2])
 
-    compare_public_vs_training(Positive_Reviews, Negative_Reviews, Positive_count_word, Negative_count_word, pos_key_count, neg_key_count)
+    #compare_public_vs_training(Positive_Reviews, Negative_Reviews, Positive_count_word, Negative_count_word, pos_key_count, neg_key_count)
 
-    Gaussian_BOW(Positive_Reviews, Negative_Reviews)
+    #Gaussian_BOW(Positive_Reviews, Negative_Reviews)
+
+    Gaussian_Formula_Classification(Positive_Reviews, Negative_Reviews, Positive_count_word, Negative_count_word)
 
     #TF = computeTF(Reviews, count_word)
     #IDF = computeIDF(Reviews, count_word)
